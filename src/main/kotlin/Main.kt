@@ -1,7 +1,38 @@
-fun main(args: Array<String>) {
-    println("Hello World!")
+import kotlin.reflect.full.declaredMemberFunctions
 
-    // Try adding program arguments via Run/Debug configuration.
-    // Learn more about running applications: https://www.jetbrains.com/help/idea/running-applications.html.
-    println("Program arguments: ${args.joinToString()}")
+interface TestRunner {
+    fun runTest(steps: Any, test: () -> Unit)
+}
+
+class Runner : TestRunner {
+    override fun runTest(steps: Any, test: () -> Unit) {
+        val classFunctions = steps::class.declaredMemberFunctions
+
+        classFunctions.filter { it.name.startsWith("before") }
+            .forEach { println("Running ${it.name}...") }
+
+        test.invoke()
+
+        classFunctions.filter { it.name.startsWith("after") }
+            .forEach { println("Running ${it.name}...") }
+    }
+}
+
+class TestSteps {
+    fun beforeTest() {
+        println("Setting up before test...")
+    }
+
+    fun afterTest() {
+        println("Cleaning up after test...")
+    }
+}
+
+fun main() {
+    val testRunner: TestRunner = Runner()
+    val testSteps = TestSteps()
+
+    testRunner.runTest(testSteps) {
+        println("Running actual test...")
+    }
 }
